@@ -3,6 +3,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use crate::caesar_cipher::CaesarCipher;
+use crate::utils::get_text_key;
 
 mod caesar_cipher;
 mod utils;
@@ -28,43 +29,26 @@ fn main() {
         };
 
         if choice == 1 {
-            println!("Input your text:");
-            let mut text = String::from("");
-            let mut key = String::from("");
-
-            if stdin().read_line(&mut text).is_err() {
-                eprintln!("Error reading text");
-                return;
-            }
-
-            let text: String = text.trim().to_string();
-
-            println!("Input the shift key:");
-
-            if stdin().read_line(&mut key).is_err() {
-                eprintln!("Error reading key");
-                return;
-            }
-
-            let key = match key.trim().parse::<u8>() {
-                Ok(num) => num,
-                Err(_) => {
-                    println!("Invalid input. Please enter a numeric value.");
-                    return;
-                }
-            };
+            let (text, key) = get_text_key();
 
             let cipher_data = CaesarCipher::new(text, key);
-
             let encrypted = cipher_data.encrypt();
 
             println!("Encrypted text: {:?}\n", encrypted);
 
             sleep(Duration::from_secs(2));
         } else if choice == 2 {
-            println!("Okay. Decrypting...\n");
+
+            let (text, key) = get_text_key();
+
+            let cipher_data = CaesarCipher::new(text, key);
+            let decrypted = cipher_data.decrypt();
+
+            println!("Encrypted text: {:?}\n", decrypted);
+
             sleep(Duration::from_secs(2));
-        }else {
+
+        } else {
             println!("Bye bye!");
             return;
         }
