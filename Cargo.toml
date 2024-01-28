@@ -1,5 +1,6 @@
 [workspace]
 members = [
-    "caesar_cipher"
+    "caesar_cipher",
+    "vigenere_cipher"
 ]
 resolver = "2"

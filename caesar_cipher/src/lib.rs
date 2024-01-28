@@ -13,7 +13,7 @@ pub fn get_text_key() -> (String, u8) {
 
     let key: u8;
     loop {
-        println!("Input the shift key:");
+        println!("Input the shift key (number):");
         let mut key_str = String::new();
         if stdin().read_line(&mut key_str).is_err() {
             println!("Error reading key");

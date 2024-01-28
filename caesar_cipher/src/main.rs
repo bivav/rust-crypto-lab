@@ -1,12 +1,12 @@
 use std::io::stdin;
+use std::process::exit;
 use std::thread::sleep;
 use std::time::Duration;
+use caesar_cipher::get_text_key;
 
-use crate::caesar_cipher::CaesarCipher;
-use crate::utils::get_text_key;
+use crate::caesars_cipher::CaesarCipher;
 
-mod caesar_cipher;
-mod utils;
+mod caesars_cipher;
 
 fn main() {
     loop {
@@ -17,7 +17,7 @@ fn main() {
 
         if stdin().read_line(&mut choice).is_err() {
             eprintln!("Error choosing choice. Please select 1 or 2.");
-            return;
+            exit(1)
         }
 
         let choice: u8 = match choice.trim().parse() {
@@ -50,7 +50,7 @@ fn main() {
 
         } else {
             println!("Bye bye!");
-            return;
+            exit(0);
         }
     }
 }
