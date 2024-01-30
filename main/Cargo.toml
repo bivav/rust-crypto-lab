@@ -1,0 +1,11 @@
+[package]
+name = "main"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+caesar_cipher = { path = "../caesar_cipher"}
+vigenere_cipher = { path = "../vigenere_cipher"}
+file_encrypt_decrypt_aes = { path = "../file_encrypt_decrypt_aes"}
