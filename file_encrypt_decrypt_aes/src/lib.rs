@@ -27,7 +27,7 @@ pub fn run(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
 
-    println!("{:?}", buffer);
+    // println!("{:?}", buffer);
 
     Ok(buffer)
 

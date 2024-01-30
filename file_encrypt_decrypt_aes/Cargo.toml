@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 ring = "0.17.7"
+hex = { version = "0.4.3", features = [] }
