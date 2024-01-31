@@ -22,13 +22,13 @@ fn main() {
     println!("Original: {}\n{:?}\n", file_content_buffer.len(), &file_content_buffer);
 
     let rng = SystemRandom::new(); // Random Number Generator
-    let mut rand_bytes = [0u8; 32]; // Creating list of 256 bits of 0s (Encryption Key)
-    rng.fill(&mut rand_bytes).unwrap(); // Replacing the list using RNG
+    let mut encryption_key = [0u8; 32]; // Creating list of 256 bits of 0s (Encryption Key)
+    rng.fill(&mut encryption_key).unwrap(); // Replacing the list using RNG
 
     let mut iv = [0u8; 12]; // Initialization Vector
     rng.fill(&mut iv).unwrap(); // Replacing the list using RNG
 
-    let unbound_key = aead::UnboundKey::new(&aead::AES_256_GCM, &rand_bytes)
+    let unbound_key = aead::UnboundKey::new(&aead::AES_256_GCM, &encryption_key)
         .unwrap_or_else(|err| {
             println!("Error creating UnboundKey: {:?}", err);
             exit(1);
@@ -43,6 +43,11 @@ fn main() {
             println!("Error Encrypting the text content: {:?}", err);
         });
 
-    println!("Encrypted: {}\n{:?}\nCiphertext (hex): {:?}", file_content_buffer.len(), &file_content_buffer, hex::encode(&file_content_buffer));
+    let mut encrypted_data = Vec::new();
+    encrypted_data.extend_from_slice(&iv);
+    encrypted_data.extend_from_slice(&file_content_buffer);
+
+    println!("Encrypted: {}\n{:?}", file_content_buffer.len(), &file_content_buffer);
+    println!("Nonce (hex): {:?}\nCiphertext (hex): {:?}", hex::encode(iv), hex::encode(&encrypted_data));
 }
 
