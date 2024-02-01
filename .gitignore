@@ -17,3 +17,5 @@ Cargo.lock
 .idea/*
 
 */file.txt
+*/key.txt
+*/decrypted.txt
