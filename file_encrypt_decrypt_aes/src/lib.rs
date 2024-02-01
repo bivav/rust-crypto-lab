@@ -1,11 +1,13 @@
+use std::cmp::min;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::num::NonZeroU32;
 use std::process::exit;
 
 use base64::Engine;
-use ring::aead;
+use ring::{aead, digest, pbkdf2};
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey};
 use ring::rand::{SecureRandom, SystemRandom};
 
@@ -45,18 +47,18 @@ impl Config {
         Ok(decoded_data)
     }
 
-    pub fn save_as_base64_encoded_file(data: Vec<u8>, filename: &str) -> Result<(), Box<dyn Error>> {
+    pub fn save_as_base64_encoded_file(data: Vec<u8>, filename: &str) -> Result<bool, Box<dyn Error>> {
         let mut file = File::create(filename)?;
         let encoded_data = base64::engine::general_purpose::STANDARD.encode(&data);
         file.write_all(encoded_data.as_bytes())?;
-        Ok(())
+        Ok(true)
     }
 
 
-    pub fn save_file(data: String, filename: &str) -> Result<(), Box<dyn Error>> {
+    pub fn save_file(data: String, filename: &str) -> Result<bool, Box<dyn Error>> {
         let mut file = File::create(filename)?;
         file.write(&data.into_bytes())?;
-        Ok(())
+        Ok(true)
     }
 }
 
@@ -64,18 +66,31 @@ impl Config {
 pub struct FileEncryptDecrypt {}
 
 impl FileEncryptDecrypt {
-    pub fn encrypt(file_content: &mut Vec<u8>) -> Result<([u8; 12], &mut Vec<u8>), Box<dyn Error>> {
+    pub fn encrypt(file_content: &mut Vec<u8>, password: String) -> Result<([u8; 12], &mut Vec<u8>, [u8; 32]), Box<dyn Error>> {
         let rng = SystemRandom::new(); // Random Number Generator
-        let mut encryption_key = [0u8; 32]; // Creating list of 256 bits of 0s (Encryption Key)
-        rng.fill(&mut encryption_key).unwrap(); // Replacing the list using RNG
+
+        // let mut encryption_key = [0u8; 32]; // Creating list of 256 bits of 0s (Encryption Key)
+        // rng.fill(&mut encryption_key).unwrap(); // Generating Encryption key
+
+        let mut salt = [0u8; 32]; // Creating list of 256 bits of 0s (Salt)
+        rng.fill(&mut salt).unwrap(); // Generating salt
 
         let mut iv = [0u8; 12]; // Initialization Vector
-        rng.fill(&mut iv).unwrap(); // Replacing the list using RNG
+        rng.fill(&mut iv).unwrap(); // Generating unique IV
+
         let nonce = Nonce::assume_unique_for_key(iv);
 
-        // TODO: Important to remove this block of code.
-        let mut file = File::create("key.txt").expect("Error");
-        file.write_all(&encryption_key).expect("TODO: panic message");
+        let password_as_bytes = password.into_bytes();
+
+        let mut encryption_key = [0u8; digest::SHA256_OUTPUT_LEN];
+
+        println!("Generated salt snippet: {:?}", &salt[..6]);
+        println!("Generated IV snippet: {:?}", iv);
+
+        let non_zero_iterations = NonZeroU32::new(100_000).unwrap();
+        pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA256, non_zero_iterations, &salt, &password_as_bytes, &mut encryption_key);
+        println!("Derived encryption key snippet: {:?}", &encryption_key[..min(encryption_key.len(), 4)]);
+
 
         let unbound_key = UnboundKey::new(&aead::AES_256_GCM, &encryption_key)
             .map_err(|e| format!("Failed to create unbound key {}", e))?;
@@ -85,23 +100,42 @@ impl FileEncryptDecrypt {
         aead_key.seal_in_place_append_tag(nonce, Aad::from(&[]), file_content)
             .map_err(|e| format!("Encryption failed: {:?}", e))?;
 
-        Ok((iv, file_content))
+        println!("Final encrypted data length: {}", file_content.len());
+
+        Ok((iv, file_content, salt))
     }
 
-    pub fn decrypt(file_content: &mut Vec<u8>, _key: [u8; 3]) -> Result<String, Box<dyn Error>> {
-        // Read the encryption key from a file.
-        // TODO: Important to remove this block of code.
-        let key = fs::read("key.txt")?;
+    pub fn decrypt(file_content: &mut Vec<u8>, key: &[u8]) -> Result<String, Box<dyn Error>> {
+        println!("File content length before decrypting: {}", file_content.len());
 
-        let iv = &file_content[0..12];
+        let salt = &file_content[..32];
+        let iv = &file_content[32..44];
+        println!("Extracted Salt snippet: {:?}", &salt[..6]);
+        println!("Extracted IV snipped: {:?}", &iv);
+
+        let mut encryption_key = [0u8; digest::SHA256_OUTPUT_LEN];
+
+        let non_zero_iterations = NonZeroU32::new(100_000).unwrap();
+
+        pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA256, non_zero_iterations, &salt, &key, &mut encryption_key);
+
+        println!("Encryption key snippet: {:?}", &encryption_key[..min(encryption_key.len(), 4)]);
+
         let nonce = Nonce::assume_unique_for_key(iv.try_into()?);
 
-        let unbound_key = UnboundKey::new(&aead::AES_256_GCM, &key)
+        let unbound_key = UnboundKey::new(&aead::AES_256_GCM, &encryption_key)
             .map_err(|e| format!("Failed to create unbound key: {:?}", e))?;
+
         let aead_key = LessSafeKey::new(unbound_key);
 
-        let decrypted_data = aead_key.open_in_place(nonce, Aad::empty(), &mut file_content[12..])
-            .map_err(|e| format!("Decryption failed: {:?}", e))?;
+
+        println!("Data to decrypt length: {}", file_content[44..].len());
+        println!("Data to decrypt snippet: {:?}", &file_content[44..50]);
+
+
+        let decrypted_data = aead_key.open_in_place(nonce, Aad::empty(), &mut file_content[44..])
+            .map_err(|_| "Decryption failed: Issue with the key".to_string())?;
+
 
         let result = String::from_utf8(decrypted_data.to_vec())
             .map_err(|e| format!("UTF-8 conversion failed: {:?}", e))?;
