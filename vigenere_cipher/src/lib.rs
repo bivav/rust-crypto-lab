@@ -172,5 +172,4 @@ impl VigenereCipher {
             }
         }).collect()
     }
-
 }

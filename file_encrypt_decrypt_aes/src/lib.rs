@@ -91,7 +91,6 @@ impl FileEncryptDecrypt {
         pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA256, non_zero_iterations, &salt, &password_as_bytes, &mut encryption_key);
         println!("Derived encryption key snippet: {:?}", &encryption_key[..min(encryption_key.len(), 4)]);
 
-
         let unbound_key = UnboundKey::new(&aead::AES_256_GCM, &encryption_key)
             .map_err(|e| format!("Failed to create unbound key {}", e))?;
 
@@ -128,14 +127,11 @@ impl FileEncryptDecrypt {
 
         let aead_key = LessSafeKey::new(unbound_key);
 
-
         println!("Data to decrypt length: {}", file_content[44..].len());
         println!("Data to decrypt snippet: {:?}", &file_content[44..50]);
 
-
         let decrypted_data = aead_key.open_in_place(nonce, Aad::empty(), &mut file_content[44..])
             .map_err(|_| "Decryption failed: Issue with the key".to_string())?;
-
 
         let result = String::from_utf8(decrypted_data.to_vec())
             .map_err(|e| format!("UTF-8 conversion failed: {:?}", e))?;
