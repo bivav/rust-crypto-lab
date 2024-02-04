@@ -66,6 +66,20 @@ impl Config {
 pub struct FileEncryptDecrypt {}
 
 impl FileEncryptDecrypt {
+    // one-shot hashing instead of Context API
+    pub fn get_hash(file_content: &[u8]) -> Vec<u8> {
+        let digest_value = digest::digest(&digest::SHA256, file_content);
+        digest_value.as_ref().to_vec()
+    }
+
+    pub fn verify_hash(encrypted_file_content: &[u8], decrypted_file_content: &[u8]) -> bool {
+        let decrypted_hash = FileEncryptDecrypt::get_hash(decrypted_file_content);
+        let encrypted_hash = &encrypted_file_content[..32];
+        println!("Decrypted hash: {:?}", hex::encode(&decrypted_hash));
+        println!("Expected hash: {:?}", hex::encode(&encrypted_hash));
+        decrypted_hash == encrypted_hash
+    }
+
     pub fn encrypt(file_content: &mut Vec<u8>, password: String) -> Result<([u8; 12], &mut Vec<u8>, [u8; 32]), Box<dyn Error>> {
         let rng = SystemRandom::new(); // Random Number Generator
 
@@ -107,8 +121,9 @@ impl FileEncryptDecrypt {
     pub fn decrypt(file_content: &mut Vec<u8>, key: &[u8]) -> Result<String, Box<dyn Error>> {
         println!("File content length before decrypting: {}", file_content.len());
 
-        let salt = &file_content[..32];
-        let iv = &file_content[32..44];
+        let salt = &file_content[32..64];
+        let iv = &file_content[64..76];
+
         println!("Extracted Salt snippet: {:?}", &salt[..6]);
         println!("Extracted IV snipped: {:?}", &iv);
 
@@ -127,10 +142,10 @@ impl FileEncryptDecrypt {
 
         let aead_key = LessSafeKey::new(unbound_key);
 
-        println!("Data to decrypt length: {}", file_content[44..].len());
-        println!("Data to decrypt snippet: {:?}", &file_content[44..50]);
+        println!("Data to decrypt length: {}", file_content[76..].len());
+        println!("Data to decrypt snippet: {:?}", &file_content[76..88]);
 
-        let decrypted_data = aead_key.open_in_place(nonce, Aad::empty(), &mut file_content[44..])
+        let decrypted_data = aead_key.open_in_place(nonce, Aad::empty(), &mut file_content[76..])
             .map_err(|_| "Decryption failed: Issue with the key".to_string())?;
 
         let result = String::from_utf8(decrypted_data.to_vec())
