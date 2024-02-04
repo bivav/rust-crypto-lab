@@ -5,8 +5,6 @@ use std::time::Duration;
 
 use ::vigenere_cipher::{get_text_and_keyword, VigenereCipher};
 
-mod vigenere_cipher;
-
 fn main() {
     loop {
         println!("Choices:");
@@ -27,14 +25,12 @@ fn main() {
             }
         };
 
-
         match choice {
             1 => {
                 let (text, keyword) = get_text_and_keyword();
                 let mut cipher_data = VigenereCipher::new(text, keyword);
 
                 let encrypted_data = cipher_data.encrypt();
-
                 println!("Encrypted: {}", encrypted_data);
 
                 sleep(Duration::from_secs(2));
@@ -44,7 +40,6 @@ fn main() {
                 let mut cipher_data = VigenereCipher::new(text, keyword);
 
                 let decrypted_data = cipher_data.decrypt();
-
                 println!("Decrypted: {}", decrypted_data);
 
                 sleep(Duration::from_secs(2));

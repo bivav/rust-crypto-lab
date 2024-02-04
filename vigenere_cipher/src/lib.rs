@@ -60,6 +60,7 @@ impl VigenereCipher {
         truncated_keyword
     }
 
+    // This code contains a bug that causes the encrypted text to be incorrect.
     // pub fn encrypt(&mut self) -> String {
     //     let truncated_keyword = Self::get_truncated_keyword(&self.text, &self.keyword);
     //
@@ -90,23 +91,22 @@ impl VigenereCipher {
                 // Normalize base to 'a' for lowercase calculation
                 let base = 'a' as u8;
 
-                // Normalize text character to lowercase for offset calculation
+                // Normalizing text character to lowercase for offset calculation for all characters
                 let offset = c.to_ascii_lowercase() as u8 - base;
 
-                // Get the corresponding keyword character and normalize to lowercase
+                // Corresponding keyword character and normalize to lowercase
                 let keyword_char = truncated_keyword.chars().nth(index).unwrap_or('a').to_ascii_lowercase() as u8;
 
-                // Calculate keyword offset from 'a'
+                // Calculate keyword offset
                 let keyword_offset = keyword_char.wrapping_sub(base);
 
-                // Calculate new offset, ensuring result stays within 0-25 range
+                // Calculate new offset ensuring result is within 0-25 range always
                 let new_offset = (offset.wrapping_add(keyword_offset)) % 26;
 
-                // Determine the case of the original character to maintain case in the encrypted text
+                // Check if case of the original character to maintain case in the encrypted text
                 let encrypted_char = if c.is_ascii_lowercase() {
                     (base + new_offset) as char
                 } else {
-                    // Convert back to uppercase if original character was uppercase
                     ((base + new_offset) as char).to_ascii_uppercase()
                 };
 
@@ -118,6 +118,7 @@ impl VigenereCipher {
     }
 
 
+    // This code didn't pass all edge cases
     // pub fn decrypt(&mut self) -> String {
     //     let truncated_keyword = Self::get_truncated_keyword(&self.text, &self.keyword);
     //
@@ -142,32 +143,23 @@ impl VigenereCipher {
 
         self.text.chars().enumerate().map(|(index, c)| {
             if c.is_ascii_alphabetic() {
-                // Normalize base to 'a' for lowercase calculation
                 let base = 'a' as u8;
 
-                // Normalize text character to lowercase for offset calculation
                 let offset = c.to_ascii_lowercase() as u8 - base;
-
-                // Get the corresponding keyword character and normalize to lowercase
                 let keyword_char = truncated_keyword.chars().nth(index).unwrap_or('a').to_ascii_lowercase() as u8;
 
-                // Calculate keyword offset from 'a'
                 let keyword_offset = keyword_char - base;
-
-                // Calculate new offset, ensuring result stays within 0-25 range
+                // Calculates the offset for decryption by subtracting the keyword offset from the character offset
+                // The result is positive and within the range of 0-25 always
                 let new_offset = ((offset as i16 - keyword_offset as i16 + 26) % 26) as u8;
 
-                // Determine the case of the original character to maintain case in the decrypted text
                 let decrypted_char = if c.is_ascii_lowercase() {
                     (base + new_offset) as char
                 } else {
-                    // Convert back to uppercase if original character was uppercase
                     ((base + new_offset) as char).to_ascii_uppercase()
                 };
-
                 decrypted_char
             } else {
-                // Non-alphabetic characters are unchanged
                 c
             }
         }).collect()

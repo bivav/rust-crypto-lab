@@ -63,14 +63,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             let saved = Config::save_file(decrypted_text, "decrypted.txt")?;
             if saved {
                 println!("File decrypted as decrypted.txt");
-            }else {
+            } else {
                 println!("Error saving file");
             }
         } else {
             println!("Hashes don't match! File is corrupted!");
         }
     } else {
-        return Err("Invalid command. Usage: cargo run -- [command] [file_path]".into());
+        eprintln!("Error: Invalid command. Usage: cargo run -- [command] [file_path]");
+        return Err("The [command] should be either 'encrypt' or 'decrypt', and [file_path] should be the path to the file you want to encrypt or decrypt".into());
     }
 
     Ok(())

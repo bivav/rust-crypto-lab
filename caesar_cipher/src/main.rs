@@ -3,13 +3,10 @@ use std::process::exit;
 use std::thread::sleep;
 use std::time::Duration;
 
-use caesar_cipher::get_text_key;
-
-use crate::caesars_cipher::CaesarCipher;
-
-mod caesars_cipher;
+use caesar_cipher::{CaesarCipher, get_text_key};
 
 fn main() {
+    // An infinite loop that keeps the program running until the user chooses to quit
     loop {
         println!("Choices:");
         println!("1. Encrypt\n2. Decrypt\n3.Quit");
@@ -21,6 +18,7 @@ fn main() {
             exit(1)
         }
 
+        // Parsing the user's input into a u8 data type
         let choice: u8 = match choice.trim().parse() {
             Ok(val) => val,
             Err(_) => {
@@ -29,21 +27,28 @@ fn main() {
             }
         };
 
+        // If the user chose to encrypt
         if choice == 1 {
             let (text, key) = get_text_key();
 
+            // Create a new CaesarCipher with the text and key
             let cipher_data = CaesarCipher::new(text, key);
-            let encrypted = cipher_data.encrypt();
 
+            // Encrypt the text
+            let encrypted = cipher_data.encrypt();
             println!("Encrypted text: {:?}\n", encrypted);
 
             sleep(Duration::from_secs(2));
-        } else if choice == 2 {
+        }
+        // If the user chose to decrypt
+        else if choice == 2 {
             let (text, key) = get_text_key();
 
+            // Create a new CaesarCipher with the text and key
             let cipher_data = CaesarCipher::new(text, key);
-            let decrypted = cipher_data.decrypt();
 
+            // Decrypt the text
+            let decrypted = cipher_data.decrypt();
             println!("Encrypted text: {:?}\n", decrypted);
 
             sleep(Duration::from_secs(2));
