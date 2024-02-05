@@ -1,7 +1,6 @@
 ### Rust Cryptography Lab
 
-**NOTE: This project is not a part of Rust Foundations, but is a personal project for learning and practicing Rust only.
-**
+**NOTE: This project is not a part of Rust Foundations, but is a personal project for learning and practicing Rust only.**
 ___
 Exploring the Rust programming language and working on some projects related to cryptography.
 
