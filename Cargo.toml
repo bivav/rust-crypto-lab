@@ -2,6 +2,8 @@
 members = [
     "caesar_cipher",
     "vigenere_cipher",
-    "file_encrypt_decrypt_aes", "main",
+    "file_encrypt_decrypt_aes",
+    "main",
+    "rsa",
 ]
 resolver = "2"
