@@ -1,0 +1,69 @@
+    let p = 61.to_biguint().unwrap();
+    let q = 53.to_biguint().unwrap();
+
+    println!("Prime p: {}", p);
+    println!("Prime q: {}", q);
+
+    println!("Calculating public and private keys...");
+    let n = &p * &q;
+    let phi = (&p - 1u32) * (&q - 1u32);
+    let e = RSAAlgo::choose_public_exponent();
+    let d = RSAAlgo::mod_inverse(e.clone(), phi.clone());
+    println!("Modulus n: {}", n);
+    println!("Totient phi: {}", phi);
+    println!("Public exponent e: {}", e);
+    println!("Private exponent d: {}", d);
+
+
+    // Simple encryption and decryption test with a known BigUint value
+    let test_value = BigUint::from(123u32);
+    // let encrypted = test_value.modpow(&e, &n);
+    let encrypted = RSAAlgo::modular_exponentiation(&test_value, &e, &n);
+    // let decrypted = encrypted.modpow(&d, &n);
+    let decrypted = RSAAlgo::modular_exponentiation(&encrypted, &d, &n);
+
+    println!("Test value: {}", test_value);
+    println!("Encrypted: {}", encrypted);
+    println!("Decrypted: {}", decrypted);
+    assert_eq!(test_value, decrypted, "Decryption failed to recover original value");
+
+    pub fn extended_gcd(e: &BigUint, phi: &BigUint) -> (BigUint, BigUint, BigUint) {
+        if e.is_zero() {
+            (phi.clone(), BigUint::zero(), BigUint::one())
+        } else {
+            let (gcd, x, y) = Self::extended_gcd(&(phi % e), e);
+
+            // Correcting the calculation of new_x to ensure proper operation order
+            let new_x = ((y + phi) - (((phi / e) * &x) % phi) + phi) % phi; // Adding phi before the final modulus to ensure positivity
+            let new_y = x;
+
+            println!("a: {}, b: {}, gcd: {}, x: {}, y: {}", &e, &phi, &gcd, &new_x, &new_y); // Debugging print
+
+
+            (gcd, new_x, new_y)
+        }
+    }
+
+
+    pub fn mod_inverse(e: BigUint, phi: BigUint) -> BigUint {
+        let (gcd, x, _) = Self::extended_gcd(&e, &phi);
+
+        println!("GCD: {}", &gcd); // Debugging print
+
+        if gcd.is_one() {
+            // Simplifying the final adjustment to ensure x is positive
+            (x + phi.clone()) % phi.clone()
+        } else {
+            panic!("Inverse does not exist, as gcd is not 1.");
+        }
+    }
+
+    pub fn encrypt(message: &BigUint, e: &BigUint, n: &BigUint) -> BigUint {
+        // c = m^e mod n
+        message.modpow(e, n)
+    }
+
+    pub fn decrypt(encrypted: &BigUint, d: &BigUint, n: &BigUint) -> BigUint {
+        // m = c^d mod n
+        encrypted.modpow(d, n)
+    }

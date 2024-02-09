@@ -12,3 +12,7 @@ base64 = "0.21.7"
 rpassword = "7.3.1"
 tokio = { version = "1.0.0", features = ["full"] }
 anyhow = "1.0.79"
+glass_pumpkin = "1.0"
+rand = "0.8.5"
+num-bigint = "0.4.4"
+num-traits = "0.2.18"
