@@ -2,7 +2,7 @@
 members = [
     "caesar_cipher",
     "vigenere_cipher",
-    "file_encrypt_decrypt_aes",
+    "hybrid_file_encryption",
     "rsa_impl",
 ]
 resolver = "2"
