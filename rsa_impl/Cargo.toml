@@ -1,5 +1,5 @@
 [package]
-name = "rsa"
+name = "rsa_impl"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,3 +16,4 @@ glass_pumpkin = "1.0"
 rand = "0.8.5"
 num-bigint = "0.4.4"
 num-traits = "0.2.18"
+rsa = "0.9.6"
