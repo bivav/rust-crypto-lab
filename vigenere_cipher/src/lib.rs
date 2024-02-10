@@ -11,7 +11,6 @@ pub fn get_text_and_keyword() -> (String, String) {
     }
     let text = text.trim().to_string();
 
-
     println!("Input the shift keyword:");
 
     let mut keyword = String::new();
@@ -33,10 +32,7 @@ pub struct VigenereCipher {
 
 impl VigenereCipher {
     pub fn new(text: String, keyword: String) -> Self {
-        Self {
-            text,
-            keyword,
-        }
+        Self { text, keyword }
     }
 
     fn get_truncated_keyword(text: &String, keyword: &String) -> String {
@@ -86,37 +82,44 @@ impl VigenereCipher {
     pub fn encrypt(&mut self) -> String {
         let truncated_keyword = Self::get_truncated_keyword(&self.text, &self.keyword);
 
-        self.text.chars().enumerate().map(|(index, c)| {
-            if c.is_ascii_alphabetic() {
-                // Normalize base to 'a' for lowercase calculation
-                let base = 'a' as u8;
+        self.text
+            .chars()
+            .enumerate()
+            .map(|(index, c)| {
+                if c.is_ascii_alphabetic() {
+                    // Normalize base to 'a' for lowercase calculation
+                    let base = 'a' as u8;
 
-                // Normalizing text character to lowercase for offset calculation for all characters
-                let offset = c.to_ascii_lowercase() as u8 - base;
+                    // Normalizing text character to lowercase for offset calculation for all characters
+                    let offset = c.to_ascii_lowercase() as u8 - base;
 
-                // Corresponding keyword character and normalize to lowercase
-                let keyword_char = truncated_keyword.chars().nth(index).unwrap_or('a').to_ascii_lowercase() as u8;
+                    // Corresponding keyword character and normalize to lowercase
+                    let keyword_char = truncated_keyword
+                        .chars()
+                        .nth(index)
+                        .unwrap_or('a')
+                        .to_ascii_lowercase() as u8;
 
-                // Calculate keyword offset
-                let keyword_offset = keyword_char.wrapping_sub(base);
+                    // Calculate keyword offset
+                    let keyword_offset = keyword_char.wrapping_sub(base);
 
-                // Calculate new offset ensuring result is within 0-25 range always
-                let new_offset = (offset.wrapping_add(keyword_offset)) % 26;
+                    // Calculate new offset ensuring result is within 0-25 range always
+                    let new_offset = (offset.wrapping_add(keyword_offset)) % 26;
 
-                // Check if case of the original character to maintain case in the encrypted text
-                let encrypted_char = if c.is_ascii_lowercase() {
-                    (base + new_offset) as char
+                    // Check if case of the original character to maintain case in the encrypted text
+                    let encrypted_char = if c.is_ascii_lowercase() {
+                        (base + new_offset) as char
+                    } else {
+                        ((base + new_offset) as char).to_ascii_uppercase()
+                    };
+
+                    encrypted_char
                 } else {
-                    ((base + new_offset) as char).to_ascii_uppercase()
-                };
-
-                encrypted_char
-            } else {
-                c
-            }
-        }).collect()
+                    c
+                }
+            })
+            .collect()
     }
-
 
     // This code didn't pass all edge cases
     // pub fn decrypt(&mut self) -> String {
@@ -141,27 +144,35 @@ impl VigenereCipher {
     pub fn decrypt(&mut self) -> String {
         let truncated_keyword = Self::get_truncated_keyword(&self.text, &self.keyword);
 
-        self.text.chars().enumerate().map(|(index, c)| {
-            if c.is_ascii_alphabetic() {
-                let base = 'a' as u8;
+        self.text
+            .chars()
+            .enumerate()
+            .map(|(index, c)| {
+                if c.is_ascii_alphabetic() {
+                    let base = 'a' as u8;
 
-                let offset = c.to_ascii_lowercase() as u8 - base;
-                let keyword_char = truncated_keyword.chars().nth(index).unwrap_or('a').to_ascii_lowercase() as u8;
+                    let offset = c.to_ascii_lowercase() as u8 - base;
+                    let keyword_char = truncated_keyword
+                        .chars()
+                        .nth(index)
+                        .unwrap_or('a')
+                        .to_ascii_lowercase() as u8;
 
-                let keyword_offset = keyword_char - base;
-                // Calculates the offset for decryption by subtracting the keyword offset from the character offset
-                // The result is positive and within the range of 0-25 always
-                let new_offset = ((offset as i16 - keyword_offset as i16 + 26) % 26) as u8;
+                    let keyword_offset = keyword_char - base;
+                    // Calculates the offset for decryption by subtracting the keyword offset from the character offset
+                    // The result is positive and within the range of 0-25 always
+                    let new_offset = ((offset as i16 - keyword_offset as i16 + 26) % 26) as u8;
 
-                let decrypted_char = if c.is_ascii_lowercase() {
-                    (base + new_offset) as char
+                    let decrypted_char = if c.is_ascii_lowercase() {
+                        (base + new_offset) as char
+                    } else {
+                        ((base + new_offset) as char).to_ascii_uppercase()
+                    };
+                    decrypted_char
                 } else {
-                    ((base + new_offset) as char).to_ascii_uppercase()
-                };
-                decrypted_char
-            } else {
-                c
-            }
-        }).collect()
+                    c
+                }
+            })
+            .collect()
     }
 }

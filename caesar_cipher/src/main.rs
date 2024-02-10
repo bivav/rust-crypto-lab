@@ -3,7 +3,7 @@ use std::process::exit;
 use std::thread::sleep;
 use std::time::Duration;
 
-use caesar_cipher::{CaesarCipher, get_text_key};
+use caesar_cipher::{get_text_key, CaesarCipher};
 
 fn main() {
     // An infinite loop that keeps the program running until the user chooses to quit

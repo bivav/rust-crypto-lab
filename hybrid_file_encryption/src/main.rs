@@ -1,7 +1,8 @@
 use std::env;
 use std::error::Error;
 use std::io::stdin;
-use std::process::exit;
+
+use anyhow::{Context, Result};
 
 use file_encrypt_decrypt_aes::{Config, FileEncryptDecrypt};
 
@@ -14,19 +15,22 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Hash value before encryption
         let before_encrypt_hash = FileEncryptDecrypt::get_hash(file_content_buffer.as_slice());
-        println!("Hash before encryption: {:?}", hex::encode(&before_encrypt_hash));
+        println!(
+            "Hash before encryption: {:?}",
+            hex::encode(&before_encrypt_hash)
+        );
 
         println!("Enter a password to encrypt the file:");
         let mut password = String::new();
 
-        stdin().read_line(&mut password).unwrap_or_else(|err| {
-            println!("Input valid password: {}", err);
-            exit(1);
-        });
+        stdin()
+            .read_line(&mut password)
+            .context("Input valid password")?;
 
         let password = password.trim().to_string();
 
-        let (iv, cipher_text, salt) = FileEncryptDecrypt::encrypt(&mut file_content_buffer, password)?;
+        let (iv, cipher_text, salt) =
+            FileEncryptDecrypt::encrypt(&mut file_content_buffer, password)?;
 
         let mut encrypted_data = Vec::new();
         encrypted_data.extend_from_slice(&before_encrypt_hash);
@@ -34,10 +38,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         encrypted_data.extend_from_slice(&iv);
         encrypted_data.extend_from_slice(&cipher_text);
 
-        println!("File content length after encrypting: {}", encrypted_data.len());
+        println!(
+            "File content length after encrypting: {}",
+            encrypted_data.len()
+        );
 
         let after_encrypt_hash = FileEncryptDecrypt::get_hash(encrypted_data.as_slice());
-        println!("Hash after encryption: {:?}", hex::encode(&after_encrypt_hash));
+        println!(
+            "Hash after encryption: {:?}",
+            hex::encode(&after_encrypt_hash)
+        );
 
         let saved = Config::save_as_base64_encoded_file(encrypted_data, "encrypted.txt")?;
 
@@ -52,11 +62,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
 
         let mut file_content_as_buffer = Config::read_file_base64(config)?;
-        let before_decryption_hash = FileEncryptDecrypt::get_hash(file_content_as_buffer.as_slice());
-        let decrypted_text = FileEncryptDecrypt::decrypt(&mut file_content_as_buffer, password.trim().as_bytes())?;
+        let before_decryption_hash =
+            FileEncryptDecrypt::get_hash(file_content_as_buffer.as_slice());
+        let decrypted_text =
+            FileEncryptDecrypt::decrypt(&mut file_content_as_buffer, password.trim().as_bytes())?;
 
         println!("Encrypted Hash: {:?}", hex::encode(before_decryption_hash));
-        let verify = FileEncryptDecrypt::verify_hash(file_content_as_buffer.as_slice(), decrypted_text.as_bytes());
+        let verify = FileEncryptDecrypt::verify_hash(
+            file_content_as_buffer.as_slice(),
+            decrypted_text.as_bytes(),
+        );
 
         if verify {
             println!("Hashes match!");

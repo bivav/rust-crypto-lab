@@ -25,7 +25,10 @@ async fn main() -> Result<()> {
 
     let data = message.as_bytes();
     let encrypt_data = public_key.encrypt(&mut rng, Pkcs1v15Encrypt, &data)?;
-    assert_ne!(&data, &encrypt_data, "Data and Encrypted data should not be equal");
+    assert_ne!(
+        &data, &encrypt_data,
+        "Data and Encrypted data should not be equal"
+    );
 
     // println!("message : {}\n{:?}", &message, &encrypt_data);
 

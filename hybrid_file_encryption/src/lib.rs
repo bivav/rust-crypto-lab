@@ -6,10 +6,11 @@ use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use std::process::exit;
 
+use anyhow::{bail, Result};
 use base64::Engine;
-use ring::{aead, digest, pbkdf2};
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey};
 use ring::rand::{SecureRandom, SystemRandom};
+use ring::{aead, digest, pbkdf2};
 
 pub struct Config {
     pub command: String,
@@ -17,9 +18,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
+    pub fn build(args: &[String]) -> Result<Config> {
         if args.len() < 3 {
-            return Err("Not enough arguments!");
+            bail!("Not enough arguments!");
         }
 
         let command = args[1].clone();
@@ -28,40 +29,42 @@ impl Config {
         Ok(Config { command, file_path })
     }
 
-    pub fn read_file(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
+    pub fn read_file(config: Config) -> Result<Vec<u8>> {
         let mut file = File::open(config.file_path)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
         Ok(buffer)
     }
 
-    pub fn read_file_base64(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
+    pub fn read_file_base64(config: Config) -> Result<Vec<u8>> {
         let file_content = fs::read_to_string(config.file_path)?;
 
-        let decoded_data = base64::engine::general_purpose::STANDARD.decode(&file_content)
+        let decoded_data = base64::engine::general_purpose::STANDARD
+            .decode(&file_content)
             .unwrap_or_else(|e| {
-                println!("Decoding Error: {:?}\nAre you sure it's the encrypted file?", e);
+                println!(
+                    "Decoding Error: {:?}\nAre you sure it's the encrypted file?",
+                    e
+                );
                 exit(1);
             });
 
         Ok(decoded_data)
     }
 
-    pub fn save_as_base64_encoded_file(data: Vec<u8>, filename: &str) -> Result<bool, Box<dyn Error>> {
+    pub fn save_as_base64_encoded_file(data: Vec<u8>, filename: &str) -> Result<bool> {
         let mut file = File::create(filename)?;
         let encoded_data = base64::engine::general_purpose::STANDARD.encode(&data);
         file.write_all(encoded_data.as_bytes())?;
         Ok(true)
     }
 
-
-    pub fn save_file(data: String, filename: &str) -> Result<bool, Box<dyn Error>> {
+    pub fn save_file(data: String, filename: &str) -> Result<bool> {
         let mut file = File::create(filename)?;
         file.write(&data.into_bytes())?;
         Ok(true)
     }
 }
-
 
 pub struct FileEncryptDecrypt {}
 
@@ -80,7 +83,10 @@ impl FileEncryptDecrypt {
         decrypted_hash == encrypted_hash
     }
 
-    pub fn encrypt(file_content: &mut Vec<u8>, password: String) -> Result<([u8; 12], &mut Vec<u8>, [u8; 32]), Box<dyn Error>> {
+    pub fn encrypt(
+        file_content: &mut Vec<u8>,
+        password: String,
+    ) -> Result<([u8; 12], &mut Vec<u8>, [u8; 32]), Box<dyn Error>> {
         let rng = SystemRandom::new(); // Random Number Generator
 
         // let mut encryption_key = [0u8; 32]; // Creating list of 256 bits of 0s (Encryption Key)
@@ -102,15 +108,25 @@ impl FileEncryptDecrypt {
         println!("Generated IV snippet: {:?}", iv);
 
         let non_zero_iterations = NonZeroU32::new(100_000).unwrap();
-        pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA256, non_zero_iterations, &salt, &password_as_bytes, &mut encryption_key);
-        println!("Derived encryption key snippet: {:?}", &encryption_key[..min(encryption_key.len(), 4)]);
+        pbkdf2::derive(
+            pbkdf2::PBKDF2_HMAC_SHA256,
+            non_zero_iterations,
+            &salt,
+            &password_as_bytes,
+            &mut encryption_key,
+        );
+        println!(
+            "Derived encryption key snippet: {:?}",
+            &encryption_key[..min(encryption_key.len(), 4)]
+        );
 
         let unbound_key = UnboundKey::new(&aead::AES_256_GCM, &encryption_key)
             .map_err(|e| format!("Failed to create unbound key {}", e))?;
 
         let aead_key = LessSafeKey::new(unbound_key);
 
-        aead_key.seal_in_place_append_tag(nonce, Aad::from(&[]), file_content)
+        aead_key
+            .seal_in_place_append_tag(nonce, Aad::from(&[]), file_content)
             .map_err(|e| format!("Encryption failed: {:?}", e))?;
 
         println!("Final encrypted data length: {}", file_content.len());
@@ -119,7 +135,10 @@ impl FileEncryptDecrypt {
     }
 
     pub fn decrypt(file_content: &mut Vec<u8>, key: &[u8]) -> Result<String, Box<dyn Error>> {
-        println!("File content length before decrypting: {}", file_content.len());
+        println!(
+            "File content length before decrypting: {}",
+            file_content.len()
+        );
 
         let salt = &file_content[32..64];
         let iv = &file_content[64..76];
@@ -131,9 +150,18 @@ impl FileEncryptDecrypt {
 
         let non_zero_iterations = NonZeroU32::new(100_000).unwrap();
 
-        pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA256, non_zero_iterations, &salt, &key, &mut encryption_key);
+        pbkdf2::derive(
+            pbkdf2::PBKDF2_HMAC_SHA256,
+            non_zero_iterations,
+            &salt,
+            &key,
+            &mut encryption_key,
+        );
 
-        println!("Encryption key snippet: {:?}", &encryption_key[..min(encryption_key.len(), 4)]);
+        println!(
+            "Encryption key snippet: {:?}",
+            &encryption_key[..min(encryption_key.len(), 4)]
+        );
 
         let nonce = Nonce::assume_unique_for_key(iv.try_into()?);
 
@@ -145,7 +173,8 @@ impl FileEncryptDecrypt {
         println!("Data to decrypt length: {}", file_content[76..].len());
         println!("Data to decrypt snippet: {:?}", &file_content[76..88]);
 
-        let decrypted_data = aead_key.open_in_place(nonce, Aad::empty(), &mut file_content[76..])
+        let decrypted_data = aead_key
+            .open_in_place(nonce, Aad::empty(), &mut file_content[76..])
             .map_err(|_| "Decryption failed: Issue with the key".to_string())?;
 
         let result = String::from_utf8(decrypted_data.to_vec())
