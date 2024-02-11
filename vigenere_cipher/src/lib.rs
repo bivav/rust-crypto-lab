@@ -121,26 +121,6 @@ impl VigenereCipher {
             .collect()
     }
 
-    // This code didn't pass all edge cases
-    // pub fn decrypt(&mut self) -> String {
-    //     let truncated_keyword = Self::get_truncated_keyword(&self.text, &self.keyword);
-    //
-    //     self.text.chars().enumerate().map(|(index, c)| {
-    //         if c.is_ascii_alphabetic() {
-    //             let base = if c.is_ascii_lowercase() { 'a' } else { 'A' } as u8;
-    //             let offset = c as u8 - base;
-    //             let keyword_char = truncated_keyword.chars().nth(index).unwrap_or('a') as u8;
-    //             let keyword_offset = keyword_char.wrapping_sub(base);
-    //             // To handle - attempt to add with overflow
-    //             let new_offset = ((offset as i16 - keyword_offset as i16 + 26) % 26) as u8;
-    //
-    //             (base + new_offset) as char
-    //         } else {
-    //             c
-    //         }
-    //     }).collect()
-    // }
-
     pub fn decrypt(&mut self) -> String {
         let truncated_keyword = Self::get_truncated_keyword(&self.text, &self.keyword);
 
