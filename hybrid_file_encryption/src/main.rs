@@ -79,7 +79,6 @@ fn main() -> Result<()> {
             println!("File encrypted as encrypted.txt");
         }
     } else if config.command == "decrypt" {
-
         // TODO: Think about how to handle the password and private key
 
         let password = rpassword::prompt_password("Enter your password: ").unwrap();

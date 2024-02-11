@@ -122,7 +122,6 @@ impl FileEncryptDecrypt {
 
         let encrypt_symmetric_key = public_key.encrypt(&mut os_rng, Pkcs1v15Encrypt, &encryption_key)?;
 
-
         let unbound_key = UnboundKey::new(&aead::AES_256_GCM, &encryption_key)
             .map_err(|e| anyhow!("Failed to create unbound key {}", e))?;
 

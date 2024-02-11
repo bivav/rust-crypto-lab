@@ -2,7 +2,6 @@ use std::io::stdin;
 
 use anyhow::Result;
 use rand::rngs::OsRng;
-
 use rsa::{Pkcs1v15Encrypt, RsaPrivateKey, RsaPublicKey};
 use tokio::time;
 
