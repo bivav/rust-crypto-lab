@@ -17,6 +17,7 @@ struct Block {
     nonce: u64,
 }
 
+#[derive(Debug)]
 pub struct Blockchain {
     pub chain: Vec<Block>,
 }
