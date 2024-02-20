@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.80"
 base64 = "0.21.7"
 clap = "4.5.1"
+crypto = { version = "0.5.1", features = ["aead", "cipher", "digest", "signature", "universal-hash"] }
 hex = "0.4.3"
 ring = "0.17.8"
 tokio = "1.36.0"
