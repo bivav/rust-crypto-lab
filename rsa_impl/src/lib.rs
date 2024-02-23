@@ -38,7 +38,6 @@ impl RSAAlgo {
     }
 
     /**
-    #### Formula
     ```markdown
     e = 65537
     ```
