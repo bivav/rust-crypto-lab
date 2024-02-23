@@ -31,10 +31,9 @@ pub fn rsa_from_scratch() {
     println!("Calculating public and private keys...");
     sleep(Duration::from_secs(3));
 
-    // calculate modulus
-
     let rsa_algo = RSAAlgo::new(&p, &q);
 
+    // calculate modulus n
     let n = rsa_algo.generate_modulus();
 
     // calculate Euler's totient
@@ -57,7 +56,6 @@ pub fn rsa_from_scratch() {
 
     println!("Encryption and decryption in progress...\n");
 
-    // Simple encryption and decryption test with a known BigUint value
     let message_bytes = BigUint::from_bytes_be(message.as_bytes());
     let encrypted = RSAAlgo::encrypt(&message_bytes, &e, &n);
     let decrypted = RSAAlgo::decrypt(&encrypted, &d, &n);
