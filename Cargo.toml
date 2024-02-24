@@ -2,7 +2,6 @@
 members = [
     "caesar_cipher",
     "vigenere_cipher",
-    "hybrid_file_encryption",
     "rsa_impl", "simple-blockchain",
 ]
 resolver = "2"
